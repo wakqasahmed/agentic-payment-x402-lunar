@@ -39,10 +39,9 @@ return [
         ],
 
         // Coinbase's CDP-hosted facilitator. Supports Base mainnet, but
-        // requires a CDP API key ID + secret (authenticated requests, not a
-        // bare URL) and is metered past 1,000 free tx/month. Opt-in: only
-        // used if both credentials are set. Auth signing is not yet
-        // implemented in SettleOnChainPayment — see README.
+        // requires a CDP API key ID + secret (authenticated requests)
+        // and is metered past 1,000 free tx/month. Opt-in: only used if
+        // credentials are set and configured in facilitator_order.
         'coinbase_cdp' => [
             'url' => env('LUNAR_CRYPTO_COINBASE_CDP_FACILITATOR_URL', 'https://api.cdp.coinbase.com/platform/v2/x402'),
             'api_key_id' => env('LUNAR_CRYPTO_CDP_API_KEY_ID'),
@@ -50,9 +49,9 @@ return [
         ],
     ],
 
-    // Production default: PayAI only. Add 'coinbase_cdp' here once CDP auth
-    // signing is implemented and credentials are configured. Don't add
-    // 'coinbase_testnet' here — it can't settle mainnet payments.
+    // Production default: PayAI only. Add 'coinbase_cdp' here if you configure
+    // CDP credentials (LUNAR_CRYPTO_CDP_API_KEY_ID / LUNAR_CRYPTO_CDP_API_KEY_SECRET).
+    // Don't add 'coinbase_testnet' here — it can't settle mainnet payments.
     'facilitator_order' => ['payai'],
 
     'x402' => [

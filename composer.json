@@ -1,12 +1,13 @@
 {
   "name": "aiopsome/agentic-payment-x402-lunar",
   "type": "project",
-  "description": "Crypto payment driver for Lunar (human wallet checkout + agent payments via x402).",
-  "keywords": ["lunarphp", "laravel", "ecommerce", "e-commerce", "headless", "store", "shop", "cart", "crypto", "usdc", "x402", "agentic-commerce"],
+  "description": "Agentic Pay for Lunar — crypto and x402 payment driver for Lunar (human wallet checkout + AI agent payments via x402).",
+  "keywords": ["lunarphp", "laravel", "ecommerce", "e-commerce", "headless", "store", "shop", "cart", "crypto", "usdc", "x402", "agentic-commerce", "agentic-pay"],
   "license": "MIT",
   "authors": [
     {
-      "name": "Wakqas Ahmed"
+      "name": "AIOpsome",
+      "homepage": "https://aiopsome.com"
     }
   ],
   "require": {
@@ -15,7 +16,8 @@
   },
   "require-dev": {
     "orchestra/testbench": "^9.0",
-    "pestphp/pest": "^2.0"
+    "pestphp/pest": "^3.0",
+    "pestphp/pest-plugin-laravel": "^3.0"
   },
   "autoload": {
     "psr-4": {
@@ -29,7 +31,7 @@
   },
   "extra": {
     "lunar": {
-      "name": "Crypto Payments"
+      "name": "Agentic Pay"
     },
     "laravel": {
       "providers": [

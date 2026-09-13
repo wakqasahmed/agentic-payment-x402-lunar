@@ -56,8 +56,8 @@ class SettleOnChainPayment
 
     protected function attempt(string $name, array $facilitator, array $paymentPayload, array $paymentRequirements): SettlementResult
     {
-        if (! empty($facilitator['api_key_secret'])) {
-            throw FacilitatorNotSupportedException::authNotImplemented($name);
+        if (empty($facilitator['url'])) {
+            throw new FacilitatorNotSupportedException("Facilitator [{$name}] is missing a valid URL.");
         }
 
         $body = [
@@ -66,8 +66,7 @@ class SettleOnChainPayment
             'paymentRequirements' => $paymentRequirements,
         ];
 
-        $verify = Http::baseUrl($facilitator['url'])
-            ->timeout(10)
+        $verify = $this->buildHttpClient($facilitator, 10)
             ->post('/verify', $body)
             ->throw()
             ->json();
@@ -76,8 +75,7 @@ class SettleOnChainPayment
             return new SettlementResult(success: false, message: $verify['invalidReason'] ?? 'Payment verification failed');
         }
 
-        $settle = Http::baseUrl($facilitator['url'])
-            ->timeout(15)
+        $settle = $this->buildHttpClient($facilitator, 15)
             ->post('/settle', $body)
             ->throw()
             ->json();
@@ -126,5 +124,43 @@ class SettleOnChainPayment
             payer: $settle['payer'] ?? null,
             facilitator: $name,
         );
+    }
+
+    /**
+     * Build an HTTP client for a facilitator, applying timeout and authentication headers if configured.
+     *
+     * Supports CDP API key headers (CB-ACCESS-KEY / X-CDP-KEY-ID) and Bearer authorization tokens.
+     */
+    protected function buildHttpClient(array $facilitator, int $timeout): \Illuminate\Http\Client\PendingRequest
+    {
+        $headers = [];
+
+        if (! empty($facilitator['api_key_secret'])) {
+            $headers['Authorization'] = 'Bearer ' . trim((string) $facilitator['api_key_secret']);
+        } elseif (! empty($facilitator['bearer_token'])) {
+            $headers['Authorization'] = 'Bearer ' . trim((string) $facilitator['bearer_token']);
+        }
+
+        if (! empty($facilitator['api_key_id'])) {
+            $keyId = trim((string) $facilitator['api_key_id']);
+            $headers['CB-ACCESS-KEY'] = $keyId;
+            $headers['X-CDP-KEY-ID'] = $keyId;
+        }
+
+        if (! empty($facilitator['headers']) && is_array($facilitator['headers'])) {
+            foreach ($facilitator['headers'] as $k => $v) {
+                if (is_string($k) && is_scalar($v)) {
+                    $headers[$k] = (string) $v;
+                }
+            }
+        }
+
+        $client = Http::baseUrl($facilitator['url'])->timeout($timeout);
+
+        if (! empty($headers)) {
+            $client = $client->withHeaders($headers);
+        }
+
+        return $client;
     }
 }

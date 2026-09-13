@@ -177,10 +177,9 @@ PayAI is the default in `facilitator_order` because it's the only
 unauthenticated option that supports Base mainnet. Coinbase's free public
 facilitator is configured but excluded from the default order — it only
 settles testnet, so silently including it in a mainnet fallback chain would
-be misleading. Coinbase's CDP-hosted facilitator supports mainnet but needs
-authenticated (signed) requests; that signing isn't implemented yet
-(`SettleOnChainPayment` throws `FacilitatorNotSupportedException` if you add
-`coinbase_cdp` to the order before then) — see `config/crypto.php`.
+be misleading. Coinbase's CDP-hosted facilitator supports mainnet with
+authenticated requests (CDP API key ID + secret) and can be added to
+`facilitator_order` — see `config/crypto.php`.
 
 ## Known limitations
 
@@ -193,10 +192,6 @@ authenticated (signed) requests; that signing isn't implemented yet
   fails gracefully (`PaymentRefund(success: false, ...)`, not an exception)
   rather than pretending to support it. Refund manually via your payee
   wallet in the interim.
-- **CDP-authenticated facilitator isn't wired up.** Coinbase's mainnet
-  facilitator needs signed (CDP API key/secret) requests; that signing
-  isn't implemented, so `coinbase_cdp` in `facilitator_order` throws
-  `FacilitatorNotSupportedException` rather than silently failing.
 - x402 assumes the consuming app already has its own cart-building API —
   Lunar doesn't ship one by default (that's a storefront/headless-API
   concern), so an x402-protected route needs a `Cart` to bind to.

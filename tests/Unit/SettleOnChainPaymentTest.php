@@ -138,12 +138,49 @@ it('rejects a settlement response missing the required network field', function 
         ->and($result->message)->toContain('different network');
 });
 
-it('throws when the only configured facilitator requires unimplemented auth', function () {
+it('sends authentication headers when settling through coinbase_cdp facilitator', function () {
     config()->set('lunar-crypto.facilitators.coinbase_cdp', [
         'url' => 'https://api.cdp.coinbase.com/platform/v2/x402',
-        'api_key_secret' => 'secret',
+        'api_key_id' => 'key_123',
+        'api_key_secret' => 'secret_xyz',
     ]);
     config()->set('lunar-crypto.facilitator_order', ['coinbase_cdp']);
+
+    Http::fake([
+        'api.cdp.coinbase.com/platform/v2/x402/verify' => Http::response(['isValid' => true, 'payer' => '0xpayer']),
+        'api.cdp.coinbase.com/platform/v2/x402/settle' => Http::response([
+            'success' => true,
+            'transaction' => '0xcdptx',
+            'network' => 'eip155:8453',
+            'payer' => '0xpayer',
+        ]),
+    ]);
+
+    $result = (new SettleOnChainPayment)->execute(samplePayload(), sampleRequirements());
+
+    expect($result->success)->toBeTrue()
+        ->and($result->txHash)->toBe('0xcdptx')
+        ->and($result->facilitator)->toBe('coinbase_cdp');
+
+    Http::assertSent(function ($request) {
+        return str_contains($request->url(), '/verify')
+            && $request->hasHeader('Authorization', 'Bearer secret_xyz')
+            && $request->hasHeader('CB-ACCESS-KEY', 'key_123')
+            && $request->hasHeader('X-CDP-KEY-ID', 'key_123');
+    });
+
+    Http::assertSent(function ($request) {
+        return str_contains($request->url(), '/settle')
+            && $request->hasHeader('Authorization', 'Bearer secret_xyz')
+            && $request->hasHeader('CB-ACCESS-KEY', 'key_123');
+    });
+});
+
+it('throws when a configured facilitator is missing a url', function () {
+    config()->set('lunar-crypto.facilitators.invalid', [
+        'url' => '',
+    ]);
+    config()->set('lunar-crypto.facilitator_order', ['invalid']);
 
     (new SettleOnChainPayment)->execute(samplePayload(), sampleRequirements());
 })->throws(FacilitatorNotSupportedException::class);
